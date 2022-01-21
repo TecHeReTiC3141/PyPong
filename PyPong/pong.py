@@ -1,12 +1,10 @@
-import pygame as pg
-from setting import *
 from game_objects import *
 
 pg.init()
 
 display = pg.display.set_mode((display_width, display_height))
 
-pygame.display.set_caption('PyPong')
+pg.display.set_caption('PyPong')
 title_font = pg.font.SysFont('Cambria', 85, italic=True)
 
 clock = pg.time.Clock()
@@ -25,7 +23,7 @@ while True:
     player_racket.move()
     ball.move()
     # Отрисовка обхектов
-    display.fill(BLACK)
+    display.fill(BACKGROUND)
 
     for obstacle in obstacles:
         obstacle.draw(display)

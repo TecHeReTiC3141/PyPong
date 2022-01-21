@@ -1,14 +1,6 @@
-import pygame
-import pygame as pg
 import random
-from math import sin, cos, pi
-from setting import *
-
-# получаем доступные изображения
-for path, direc, file in os.walk('./pypong_images'):
-    print(path, file)
-    for name_file in file:
-        images_dict[name_file] = os.path.join(path, name_file)
+from buttons import *
+from obstacles import *
 
 
 class Racket:
@@ -22,7 +14,7 @@ class Racket:
         self.rect = self.surf.get_rect(topleft=(self.x, self.y))
         self.cool_down = cool_down
 
-    def draw(self, sc: pygame.Surface):
+    def draw(self, sc: pg.Surface):
         self.surf.fill(WHITE)
         sc.blit(self.surf, (self.x, self.y))
 
@@ -37,25 +29,6 @@ class Racket:
         if keys[pg.K_RIGHT] and not self.rect.colliderect(mid_border.rect):
             self.x += 4
         self.rect.update(self.x, self.y, self.width, self.height)
-
-
-class Border:
-
-    def __init__(self, x, y, width, height, color=BLACK, filled=None):
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
-        self.surf = pg.Surface((self.width, self.height))
-        self.rect = self.surf.get_rect(topleft=(self.x, self.y))
-        self.color = color
-        self.filled = filled
-
-    def draw(self, sc: pygame.Surface):
-        pygame.draw.rect(self.surf, self.color, self.surf.get_rect(),
-                         width=(0 if self.filled is None else self.filled))
-        sc.blit(self.surf, (self.x, self.y))
-
 
 class TennisBall:
 
@@ -108,7 +81,7 @@ class TennisBall:
 
     def collide_with_rackets(self, racket: Racket):
         if self.rect.colliderect(racket.rect) and self.cool_down <= 0:
-            self.cool_down = 30
+            self.cool_down = 45
             if self.rect.x >= racket.rect.x + racket.rect.width - 10:
                 if self.angle < 180:
                     self.angle -= 2 * (self.angle - 90)
@@ -131,52 +104,7 @@ class TennisBall:
         return f'{self.x}, {self.y}, {self.rect}'
 
 
-class Button:
 
-    def __init__(self, x, y, width, height, action, border:tuple = None, icon_path: str = None):
-        self.action = action
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
-        self.icon = pg.transfort.scale(pg.image.load(icon_path), (width, height))
-
-        self.surf = pg.Surface((width, height))
-        self.rect = pg.Rect(x, y, width, height)
-        self.infocus = False
-
-    def onfocus(self):
-        mouse_pos = pg.mouse.get_pos()
-        if self.rect.collidepoint(mouse_pos) and not self.infocus:
-            self.x = self.rect.x - 10
-            self.y = self.rect.y - 10
-            self.width = self.rect.width + 20
-            self.height = self.rect.height + 20
-            self.surf = pg.Surface((self.width, self.height))
-            self.infocus = True
-
-        elif not self.rect.collidepoint(mouse_pos) and self.infocus:
-            self.x = self.rect.x
-            self.y = self.rect.y
-            self.width = self.rect.width
-            self.height = self.rect.height
-            self.surf = pg.Surface((self.width, self.height))
-            self.infocus = False
-
-    def draw_object(self, sc: pg.Surface):
-        self.surf.fill(WHITE)
-        if self.icon:
-            self.surf.blit(self.icon, (0, 0))
-        sc.blit(self.surf, (self.x, self.y))
-        self.onfocus()
-
-    def clicked(self, mouse_pos: tuple):
-        if self.rect.collidepoint(mouse_pos):
-            self.action()
-
-
-def go_to():
-    pass
 
 
 # obstacles
@@ -196,4 +124,4 @@ ball = TennisBall(mid_border.x + mid_border.width // 2,
 
 # buttons
 pause_button = Button(display_width // 10 * 9, display_height // 60, display_width // 18, display_height // 12,
-                      go_to, images_dict['pause_icon.png'])
+                      go_to, border=(BLACK, 7), icon_path=images_dict['pause_icon.png'])
