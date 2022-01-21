@@ -31,13 +31,10 @@ while True:
         obstacle.draw(display)
 
     player_racket.draw(display)
-
     display.blit(title_font.render('PyPong', True, "#28cdcc"), (50, 20))
-    try:
-        pause_button.draw_object(display)
-    except ValueError:
-        print(pause_button.x, pause_button.x, pause_button.width, pause_button.height)
+    pause_button.draw_object(display)
     ball.draw(display)
+
     pg.display.update()
     clock.tick(60)
 
