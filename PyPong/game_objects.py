@@ -133,13 +133,14 @@ class TennisBall:
 
 class Button:
 
-    def __init__(self, x, y, width, height, action, icon_path: str = None):
+    def __init__(self, x, y, width, height, action, border:tuple = None, icon_path: str = None):
         self.action = action
         self.x = x
         self.y = y
         self.width = width
         self.height = height
-        self.icon = pg.image.load(icon_path)
+        self.icon = pg.transfort.scale(pg.image.load(icon_path), (width, height))
+
         self.surf = pg.Surface((width, height))
         self.rect = pg.Rect(x, y, width, height)
         self.infocus = False
@@ -147,19 +148,19 @@ class Button:
     def onfocus(self):
         mouse_pos = pg.mouse.get_pos()
         if self.rect.collidepoint(mouse_pos) and not self.infocus:
-            self.x -= 20
-            self.y -= 20
-            self.width += 40
-            self.height += 40
-            self.surf = pg.Surface(self.width, self.height)
+            self.x = self.rect.x - 10
+            self.y = self.rect.y - 10
+            self.width = self.rect.width + 20
+            self.height = self.rect.height + 20
+            self.surf = pg.Surface((self.width, self.height))
             self.infocus = True
 
-        if not self.rect.collidepoint(mouse_pos) and self.infocus:
-            self.x += 20
-            self.y += 20
-            self.width -= 40
-            self.height -= 40
-            self.surf = pg.Surface(self.width, self.height)
+        elif not self.rect.collidepoint(mouse_pos) and self.infocus:
+            self.x = self.rect.x
+            self.y = self.rect.y
+            self.width = self.rect.width
+            self.height = self.rect.height
+            self.surf = pg.Surface((self.width, self.height))
             self.infocus = False
 
     def draw_object(self, sc: pg.Surface):
@@ -167,8 +168,7 @@ class Button:
         if self.icon:
             self.surf.blit(self.icon, (0, 0))
         sc.blit(self.surf, (self.x, self.y))
-
-        # self.onfocus()
+        self.onfocus()
 
     def clicked(self, mouse_pos: tuple):
         if self.rect.collidepoint(mouse_pos):
