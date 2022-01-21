@@ -30,8 +30,11 @@ while True:
 
     player_racket.draw(display)
     display.blit(title_font.render('PyPong', True, "#28cdcc"), (50, 20))
-    pause_button.draw_object(display)
     ball.draw(display)
+
+    if paused:
+        display.blit()
+    pause_button.draw_object(display)
 
     pg.display.update()
     clock.tick(60)

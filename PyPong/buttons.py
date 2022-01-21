@@ -53,5 +53,18 @@ class Button:
 
 
 def pause(button_trigger: Button, blur_surf: pg.Surface, pause_surf: pg.Surface):
-    button_trigger.icon = pg.transform.scale(images_dict['play_icon.jpg'], (self.width, self.height))
+    global paused
+    button_trigger.icon = pg.transform.scale(images_dict['play_icon.jpg'],
+                                             (button_trigger.width, button_trigger.height))
+    button_trigger.action = unpause
+    blur_surf.set_alpha(60)
+    paused = True
+
+def unpause(button_trigger: Button, blur_surf: pg.Surface, pause_surf: pg.Surface):
+    global paused
+    button_trigger.icon = pg.transform.scale(images_dict['pause_icon.jpg'],
+                                             (button_trigger.width, button_trigger.height))
+    button_trigger.action = pause
+    blur_surf.set_alpha(255)
+    paused = False
 
