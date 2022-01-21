@@ -1,2 +1,2 @@
 # PyPong
-Simple game made with pygame
+Simple physics game made with pygame
