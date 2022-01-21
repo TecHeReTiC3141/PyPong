@@ -1,4 +1,5 @@
 import pygame as pg
+
 from setting import *
 
 class Button:

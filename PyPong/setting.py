@@ -1,3 +1,5 @@
+from math import sin, cos, pi
+
 import os
 import pygame
 

@@ -1,5 +1,5 @@
 import pygame as pg
-from math import sin, cos, pi
+
 from setting import *
 
 
