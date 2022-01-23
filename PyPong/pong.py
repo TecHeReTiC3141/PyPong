@@ -19,9 +19,12 @@ while True:
         elif event.type == pg.MOUSEBUTTONDOWN:
             if event.button == 1:
                 pause_button.clicked(pg.mouse.get_pos())
+                print(setting.paused)
 
-    player_racket.move()
-    ball.move()
+    if not setting.paused:
+
+        player_racket.move()
+        ball.move()
     # Отрисовка обхектов
     display.fill(BACKGROUND)
 
@@ -32,8 +35,10 @@ while True:
     display.blit(title_font.render('PyPong', True, "#28cdcc"), (50, 20))
     ball.draw(display)
 
-    if paused:
-        display.blit()
+    if setting.paused:
+        display.blit(blur_surf, (0, 0))
+        display.blit(menu_surf, (display_width // 3, display_height // 3))
+        print(blur_surf.get_alpha())
     pause_button.draw_object(display)
 
     pg.display.update()

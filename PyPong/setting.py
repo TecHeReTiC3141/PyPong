@@ -16,5 +16,9 @@ images_dict = {}
 # получаем доступные изображения
 for path, dir, file in os.walk(r'./pypong_images'):
     for name_file in file:
-        images_dict[name_file] = path + '/' + name_file
-print(images_dict)
+        images_dict[name_file] = pygame.image.load(path + '/' + name_file)
+
+blur_surf = pygame.Surface((display_width, display_height))
+blur_surf.set_alpha(255)
+
+menu_surf = pygame.Surface((display_width // 3, display_height // 3))

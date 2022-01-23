@@ -124,6 +124,10 @@ ball = TennisBall(mid_border.x + mid_border.width // 2,
 
 # buttons
 pause_button = Button(display_width // 10 * 9, display_height // 60, display_width // 18, display_height // 12,
-                      pause, border=(BLACK, 7), icon_path=images_dict['pause_icon.png'])
+                      'pause', border=(BLACK, 10), icon=images_dict['pause_icon.png'])
+
+
+# surfaces
+
 
 

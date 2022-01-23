@@ -1,18 +1,18 @@
 import pygame as pg
-
+import setting
 from setting import *
+
 
 class Button:
 
-    def __init__(self, x, y, width, height, action, border:tuple = None, icon_path: str = None):
+    def __init__(self, x, y, width, height, action:str, border:tuple = None, icon: pg.Surface  = None):
         self.action = action
         self.x = x
         self.y = y
         self.width = width
         self.height = height
         self.border = border # border(color, width)
-
-        self.icon = pg.transform.scale(pg.image.load(icon_path), (width, height))
+        self.icon = pg.transform.scale(icon, (width, height))
         self.surf = pg.Surface((width, height))
         self.rect = pg.Rect(x, y, width, height)
         self.infocus = False
@@ -39,8 +39,8 @@ class Button:
 
     def draw_object(self, sc: pg.Surface):
         if self.border:
-            pygame.draw.rect(sc, self.border[0], (self.x - self.border[1], self.y - self.border[1],
-                                  self.width + self.border[1] * 2, self.height + self.border[1] * 2),
+            pygame.draw.rect(sc, self.border[0], (self.x, self.y,
+                                  self.width, self.height),
                              width=self.border[1])
         self.surf.fill(WHITE)
         if self.icon:
@@ -50,22 +50,25 @@ class Button:
 
     def clicked(self, mouse_pos: tuple):
         if self.rect.collidepoint(mouse_pos):
-            self.action()
+            if self.action == 'pause':
+                self.pause(blur_surf, menu_surf)
+            elif self.action == 'unpause':
+                self.unpause(blur_surf, menu_surf)
 
 
-def pause(button_trigger: Button, blur_surf: pg.Surface, pause_surf: pg.Surface):
-    global paused
-    button_trigger.icon = pg.transform.scale(images_dict['play_icon.jpg'],
-                                             (button_trigger.width, button_trigger.height))
-    button_trigger.action = unpause
-    blur_surf.set_alpha(60)
-    paused = True
+    def pause(self, blur_surf: pg.Surface, pause_surf: pg.Surface):
+        global paused
+        self.icon = pg.transform.scale(images_dict['play_icon.jpg'],
+                                                 (self.width, self.height))
+        self.action = 'unpause'
+        blur_surf.set_alpha(125)
+        setting.paused = True
 
-def unpause(button_trigger: Button, blur_surf: pg.Surface, pause_surf: pg.Surface):
-    global paused
-    button_trigger.icon = pg.transform.scale(images_dict['pause_icon.jpg'],
-                                             (button_trigger.width, button_trigger.height))
-    button_trigger.action = pause
-    blur_surf.set_alpha(255)
-    paused = False
-
+    def unpause(self, blur_surf: pg.Surface, pause_surf: pg.Surface):
+        global paused
+        self.icon = pg.transform.scale(images_dict['pause_icon.png'],
+                                                 (self.width, self.height))
+        self.action = 'pause'
+        blur_surf.set_alpha(0)
+        blur_surf.fill(BLACK)
+        setting.paused = False
