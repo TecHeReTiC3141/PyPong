@@ -1,6 +1,7 @@
 import pygame as pg
+
 import setting
-from setting import *
+from decorations import *
 
 
 class Button:
@@ -48,27 +49,29 @@ class Button:
         sc.blit(self.surf, (self.x, self.y))
         self.onfocus()
 
-    def clicked(self, mouse_pos: tuple):
+    def clicked(self, mouse_pos: tuple, *args):
         if self.rect.collidepoint(mouse_pos):
             if self.action == 'pause':
-                self.pause(blur_surf, menu_surf)
+                self.pause(*args)
             elif self.action == 'unpause':
-                self.unpause(blur_surf, menu_surf)
+                self.unpause(*args)
 
 
-    def pause(self, blur_surf: pg.Surface, pause_surf: pg.Surface):
-        global paused
+    def pause(self, blur_surf: pg.Surface, pause_surf: pg.Surface, menu_label: decor_label):
         self.icon = pg.transform.scale(images_dict['play_icon.jpg'],
                                                  (self.width, self.height))
         self.action = 'unpause'
-        blur_surf.set_alpha(125)
+        blur_surf.set_alpha(100)
+
+        menu_label.move_to(display_width // 3, display_height // 3)
         setting.paused = True
 
-    def unpause(self, blur_surf: pg.Surface, pause_surf: pg.Surface):
-        global paused
+    def unpause(self, blur_surf: pg.Surface, pause_surf: pg.Surface, menu_label: decor_label):
         self.icon = pg.transform.scale(images_dict['pause_icon.png'],
                                                  (self.width, self.height))
         self.action = 'pause'
         blur_surf.set_alpha(0)
         blur_surf.fill(BLACK)
+
+        menu_label.move_to(display_width // 4, -menu_label.surf.get_height())
         setting.paused = False
