@@ -1,65 +1,47 @@
-import pygame
-import pygame as pg
-import random
-from math import sin, cos, pi
-from setting import *
-
-# получаем доступные изображения
-for path, direc, file in os.walk('./pypong_images'):
-    print(path, file)
-    for name_file in file:
-        images_dict[name_file] = os.path.join(path, name_file)
+from random import *
+from buttons import *
+from obstacles import *
+from decorations import *
 
 
 class Racket:
 
-    def __init__(self, x: int, y: int, width: int, height: int, cool_down=0):
+    def __init__(self, x: int, y: int, width: int, height: int, cool_down=0, speed: int=4):
         self.width = width
         self.height = height
         self.x = x
         self.y = y
+        self.speed = speed
         self.surf = pg.Surface((self.width, self.height))
+        self.surf.set_colorkey(WHITE)
         self.rect = self.surf.get_rect(topleft=(self.x, self.y))
         self.cool_down = cool_down
 
-    def draw(self, sc: pygame.Surface):
+
+    def draw(self, sc: pg.Surface):
         self.surf.fill(WHITE)
+        pygame.draw.rect(self.surf, '#0000BB', (self.width // 4, 0, self.width // 4 * 3, self.height // 5))
+        pygame.draw.rect(self.surf, '#0000BB', (self.width // 4, self.height // 5 * 4, self.width * 3 // 4, self.height // 5))
+        pygame.draw.rect(self.surf, '#0000BB', (self.width // 3 * 2, 0, self.width // 3, self.height))
         sc.blit(self.surf, (self.x, self.y))
+
 
     def move(self):
         keys = pg.key.get_pressed()
         if keys[pg.K_UP] and not self.rect.colliderect(upper_border.rect):
-            self.y -= 4
+            self.y -= self.speed
         if keys[pg.K_DOWN] and not self.rect.colliderect(lower_border.rect):
-            self.y += 4
+            self.y += self.speed
         if keys[pg.K_LEFT] and not self.rect.colliderect(left_border.rect):
-            self.x -= 4
+            self.x -= self.speed
         if keys[pg.K_RIGHT] and not self.rect.colliderect(mid_border.rect):
-            self.x += 4
+            self.x += self.speed
         self.rect.update(self.x, self.y, self.width, self.height)
-
-
-class Border:
-
-    def __init__(self, x, y, width, height, color=BLACK, filled=None):
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
-        self.surf = pg.Surface((self.width, self.height))
-        self.rect = self.surf.get_rect(topleft=(self.x, self.y))
-        self.color = color
-        self.filled = filled
-
-    def draw(self, sc: pygame.Surface):
-        pygame.draw.rect(self.surf, self.color, self.surf.get_rect(),
-                         width=(0 if self.filled is None else self.filled))
-        sc.blit(self.surf, (self.x, self.y))
 
 
 class TennisBall:
 
-    def __init__(self, x, y, radius, speed, angle=220, cool_down=0):
+    def __init__(self, x, y, radius, speed, angle=220, cool_down=0, mode=1):
         self.x = x
         self.y = y
         self.radius = radius
@@ -67,6 +49,7 @@ class TennisBall:
         self.rect = pg.Rect(self.x, self.y, self.radius * 2, self.radius * 2)
         self.cool_down = cool_down
         self.speed = speed
+        self.mode = mode
 
     def draw(self, surf):
         pygame.draw.circle(surf, '#a9a016', (self.x, self.y), self.radius)
@@ -83,6 +66,7 @@ class TennisBall:
         self.rect.center = (self.x, self.y)
         self.collide()
         self.collide_with_rackets(player_racket)
+        self.collide_with_rackets(enemy_racket)
         if y_diff >= 0:
             self.speed *= .999
         else:
@@ -93,14 +77,21 @@ class TennisBall:
     def collide(self):
         if self.rect.colliderect(upper_border.rect):
             self.angle += 2 * (180 - self.angle)
+
         elif self.rect.colliderect(lower_border.rect):
             self.angle -= 2 * (self.angle - 180)
+
         elif self.rect.colliderect(left_border.rect):
+            score[1] += 1
+            enemy_score.label = f'{score[1]}'
             if self.angle < 180:
                 self.angle -= 2 * (self.angle - 90)
             else:
                 self.angle += 2 * (270 - self.angle)
+
         elif self.rect.colliderect(right_border.rect):
+            score[0] += 1
+            player_score.label = f'{score[0]}'
             if self.angle < 90:
                 self.angle += 2 * (90 - self.angle)
             else:
@@ -108,7 +99,7 @@ class TennisBall:
 
     def collide_with_rackets(self, racket: Racket):
         if self.rect.colliderect(racket.rect) and self.cool_down <= 0:
-            self.cool_down = 30
+            self.cool_down = 45
             if self.rect.x >= racket.rect.x + racket.rect.width - 10:
                 if self.angle < 180:
                     self.angle -= 2 * (self.angle - 90)
@@ -131,69 +122,78 @@ class TennisBall:
         return f'{self.x}, {self.y}, {self.rect}'
 
 
-class Button:
+class EnemyRacket(Racket):
 
-    def __init__(self, x, y, width, height, action, border:tuple = None, icon_path: str = None):
-        self.action = action
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
-        self.icon = pg.transfort.scale(pg.image.load(icon_path), (width, height))
+    def __init__(self, x: int, y: int, width: int, height: int, cool_down=0, speed: int=4):
+        super().__init__(x, y, width, height, cool_down, speed)
+        self.search_rect = pg.Rect(x - width, y - height // 2, width * 3, height * 2)
+        self.reverse = 1
 
-        self.surf = pg.Surface((width, height))
-        self.rect = pg.Rect(x, y, width, height)
-        self.infocus = False
-
-    def onfocus(self):
-        mouse_pos = pg.mouse.get_pos()
-        if self.rect.collidepoint(mouse_pos) and not self.infocus:
-            self.x = self.rect.x - 10
-            self.y = self.rect.y - 10
-            self.width = self.rect.width + 20
-            self.height = self.rect.height + 20
-            self.surf = pg.Surface((self.width, self.height))
-            self.infocus = True
-
-        elif not self.rect.collidepoint(mouse_pos) and self.infocus:
-            self.x = self.rect.x
-            self.y = self.rect.y
-            self.width = self.rect.width
-            self.height = self.rect.height
-            self.surf = pg.Surface((self.width, self.height))
-            self.infocus = False
-
-    def draw_object(self, sc: pg.Surface):
+    def draw(self, sc: pg.Surface):
         self.surf.fill(WHITE)
-        if self.icon:
-            self.surf.blit(self.icon, (0, 0))
+        pygame.draw.rect(self.surf, '#BB0000', (0, 0, self.width, self.height // 5))
+        pygame.draw.rect(self.surf, '#BB0000', (0, self.height // 5 * 4, self.width, self.height // 5))
+        pygame.draw.rect(self.surf, '#BB0000', (0, 0, self.width // 3, self.height))
         sc.blit(self.surf, (self.x, self.y))
-        self.onfocus()
 
-    def clicked(self, mouse_pos: tuple):
-        if self.rect.collidepoint(mouse_pos):
-            self.action()
+    def play(self, ball: TennisBall):
+        x, y = ball.x, ball.y
+        if y > self.rect.y + self.rect.height * .67:
+            if self.reverse > 0 and not self.rect.colliderect(lower_border.rect):
+                self.y += self.speed * self.reverse
+                self.rect = self.rect.move(0, self.speed * self.reverse)
+            elif self.reverse < 0 and not self.rect.colliderect(upper_border.rect):
+                self.y += self.speed * self.reverse
+                self.rect = self.rect.move(0, self.speed * self.reverse)
 
+        elif y < self.rect.y + self.rect.height * .33:
+            if self.reverse > 0 and not self.rect.colliderect(upper_border.rect):
+                self.y -= self.speed * self.reverse
+                self.rect = self.rect.move(0, -self.speed * self.reverse)
+            elif self.reverse < 0 and not self.rect.colliderect(lower_border.rect):
+                self.y -= self.speed * self.reverse
+                self.rect = self.rect.move(0, -self.speed * self.reverse)
 
-def go_to():
-    pass
+    def change_mode(self):
+        mode = randint(1, 100)
+        if mode < 80:
+            self.speed = 4
+            self.reverse = 1
+        elif 80 <= mode <= 88:
+            self.reverse = -1
+        else:
+            self.speed = 2
 
 
 # obstacles
-upper_border = Border(0, 0, display_width, display_height // 15, color='#8c9191')
+upper_border = Border(0, 0, display_width, display_height // 7, color='#8c9191')
 lower_border = Border(0, display_height // 20 * 19, display_width, display_height // 15, color='#8c9191')
 left_border = Border(0, 0, display_width // 25, display_height, color='#8c9191')
 right_border = Border(display_width // 25 * 24, 0, display_width // 25 + 15, display_height, color='#8c9191')
 mid_border = Border(display_width // 2,
-                    display_height // 6, display_width // 60, display_height // 3 * 2, color='#f83c08', filled=5)
+                    display_height // 5, display_width // 60, display_height // 3 * 2, color='#f83c08', filled=5)
 obstacles = [upper_border, lower_border, mid_border, left_border, right_border]
 
 player_racket = Racket(x=display_width // 4, y=display_height // 2,
                        width=display_width // 30, height=display_height // 8)  # Ракетка игрока
 
+enemy_racket = EnemyRacket(x=display_width * 3 // 4, y=display_height // 2,
+                       width=display_width // 30, height=display_height // 8)
+
 ball = TennisBall(mid_border.x + mid_border.width // 2,
-                  random.randint(mid_border.y, mid_border.y + mid_border.height), display_width // 36, 5)
+                  randint(mid_border.y, mid_border.y + mid_border.height), display_width // 36, 6)
 
 # buttons
-pause_button = Button(display_width // 10 * 9, display_height // 60, display_width // 18, display_height // 12,
-                      go_to, images_dict['pause_icon.png'])
+pause_button = Button(display_width // 5 * 4, display_height // 60, display_width // 18, display_height // 12,
+                      'pause', border=(BLACK, 10), icon=images_dict['pause_icon.png'])
+
+
+# surfaces and decorations
+menu_title = decor_label(display_width // 4, -display_height // 5, display_width // 4, display_height // 5, 3, 'PyPong', "#28cdcc", title_font, background=None)
+
+player_score = decor_label(display_width // 36, display_height // 24, display_width // 36, display_height // 24,
+                           0, '0', '#282828', background=WHITE, border=(5, BLACK))
+
+enemy_score = decor_label(display_width // 18 * 17, display_height // 24, display_width // 36, display_height // 24,
+                           0, '0', '#282828', background=WHITE, border=(5, BLACK))
+
