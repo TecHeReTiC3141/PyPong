@@ -1,4 +1,4 @@
-import random
+from random import *
 from buttons import *
 from obstacles import *
 from decorations import *
@@ -13,12 +13,18 @@ class Racket:
         self.y = y
         self.speed = speed
         self.surf = pg.Surface((self.width, self.height))
+        self.surf.set_colorkey(WHITE)
         self.rect = self.surf.get_rect(topleft=(self.x, self.y))
         self.cool_down = cool_down
 
+
     def draw(self, sc: pg.Surface):
         self.surf.fill(WHITE)
+        pygame.draw.rect(self.surf, '#0000BB', (self.width // 4, 0, self.width // 4 * 3, self.height // 5))
+        pygame.draw.rect(self.surf, '#0000BB', (self.width // 4, self.height // 5 * 4, self.width * 3 // 4, self.height // 5))
+        pygame.draw.rect(self.surf, '#0000BB', (self.width // 3 * 2, 0, self.width // 3, self.height))
         sc.blit(self.surf, (self.x, self.y))
+
 
     def move(self):
         keys = pg.key.get_pressed()
@@ -33,12 +39,9 @@ class Racket:
         self.rect.update(self.x, self.y, self.width, self.height)
 
 
-
-
-
 class TennisBall:
 
-    def __init__(self, x, y, radius, speed, angle=220, cool_down=0):
+    def __init__(self, x, y, radius, speed, angle=220, cool_down=0, mode=1):
         self.x = x
         self.y = y
         self.radius = radius
@@ -46,6 +49,7 @@ class TennisBall:
         self.rect = pg.Rect(self.x, self.y, self.radius * 2, self.radius * 2)
         self.cool_down = cool_down
         self.speed = speed
+        self.mode = mode
 
     def draw(self, surf):
         pygame.draw.circle(surf, '#a9a016', (self.x, self.y), self.radius)
@@ -73,8 +77,10 @@ class TennisBall:
     def collide(self):
         if self.rect.colliderect(upper_border.rect):
             self.angle += 2 * (180 - self.angle)
+
         elif self.rect.colliderect(lower_border.rect):
             self.angle -= 2 * (self.angle - 180)
+
         elif self.rect.colliderect(left_border.rect):
             score[1] += 1
             enemy_score.label = f'{score[1]}'
@@ -82,6 +88,7 @@ class TennisBall:
                 self.angle -= 2 * (self.angle - 90)
             else:
                 self.angle += 2 * (270 - self.angle)
+
         elif self.rect.colliderect(right_border.rect):
             score[0] += 1
             player_score.label = f'{score[0]}'
@@ -120,22 +127,42 @@ class EnemyRacket(Racket):
     def __init__(self, x: int, y: int, width: int, height: int, cool_down=0, speed: int=4):
         super().__init__(x, y, width, height, cool_down, speed)
         self.search_rect = pg.Rect(x - width, y - height // 2, width * 3, height * 2)
+        self.reverse = 1
 
     def draw(self, sc: pg.Surface):
-        pygame.draw.rect(sc, "#00AAAA", self.search_rect)
         self.surf.fill(WHITE)
+        pygame.draw.rect(self.surf, '#BB0000', (0, 0, self.width, self.height // 5))
+        pygame.draw.rect(self.surf, '#BB0000', (0, self.height // 5 * 4, self.width, self.height // 5))
+        pygame.draw.rect(self.surf, '#BB0000', (0, 0, self.width // 3, self.height))
         sc.blit(self.surf, (self.x, self.y))
 
     def play(self, ball: TennisBall):
         x, y = ball.x, ball.y
-        if y > self.search_rect.y + self.search_rect.height + 50 and not self.rect.colliderect(lower_border.rect):
-            self.y += self.speed
-            self.rect = self.rect.move(0, self.speed)
-            self.search_rect = self.search_rect.move(0, self.speed)
-        elif y < self.search_rect.y + self.search_rect.height - 30 and not self.rect.colliderect(upper_border.rect):
-            self.y -= self.speed
-            self.rect = self.rect.move(0, -self.speed)
-            self.search_rect = self.search_rect.move(0, -self.speed)
+        if y > self.rect.y + self.rect.height * .67:
+            if self.reverse > 0 and not self.rect.colliderect(lower_border.rect):
+                self.y += self.speed * self.reverse
+                self.rect = self.rect.move(0, self.speed * self.reverse)
+            elif self.reverse < 0 and not self.rect.colliderect(upper_border.rect):
+                self.y += self.speed * self.reverse
+                self.rect = self.rect.move(0, self.speed * self.reverse)
+
+        elif y < self.rect.y + self.rect.height * .33:
+            if self.reverse > 0 and not self.rect.colliderect(upper_border.rect):
+                self.y -= self.speed * self.reverse
+                self.rect = self.rect.move(0, -self.speed * self.reverse)
+            elif self.reverse < 0 and not self.rect.colliderect(lower_border.rect):
+                self.y -= self.speed * self.reverse
+                self.rect = self.rect.move(0, -self.speed * self.reverse)
+
+    def change_mode(self):
+        mode = randint(1, 100)
+        if mode < 80:
+            self.speed = 4
+            self.reverse = 1
+        elif 80 <= mode <= 88:
+            self.reverse = -1
+        else:
+            self.speed = 2
 
 
 # obstacles
@@ -144,7 +171,7 @@ lower_border = Border(0, display_height // 20 * 19, display_width, display_heigh
 left_border = Border(0, 0, display_width // 25, display_height, color='#8c9191')
 right_border = Border(display_width // 25 * 24, 0, display_width // 25 + 15, display_height, color='#8c9191')
 mid_border = Border(display_width // 2,
-                    display_height // 6, display_width // 60, display_height // 3 * 2, color='#f83c08', filled=5)
+                    display_height // 5, display_width // 60, display_height // 3 * 2, color='#f83c08', filled=5)
 obstacles = [upper_border, lower_border, mid_border, left_border, right_border]
 
 player_racket = Racket(x=display_width // 4, y=display_height // 2,
@@ -154,7 +181,7 @@ enemy_racket = EnemyRacket(x=display_width * 3 // 4, y=display_height // 2,
                        width=display_width // 30, height=display_height // 8)
 
 ball = TennisBall(mid_border.x + mid_border.width // 2,
-                  random.randint(mid_border.y, mid_border.y + mid_border.height), display_width // 36, 5)
+                  randint(mid_border.y, mid_border.y + mid_border.height), display_width // 36, 6)
 
 # buttons
 pause_button = Button(display_width // 5 * 4, display_height // 60, display_width // 18, display_height // 12,

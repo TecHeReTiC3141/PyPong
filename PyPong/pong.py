@@ -24,7 +24,7 @@ while True:
         ball.move()
 
     # Отрисовка обхектов
-    display.fill(BACKGROUND)
+    display.blit(BACKGROUND, (17, 28))
 
     for obstacle in obstacles:
         obstacle.draw(display)
@@ -53,4 +53,6 @@ while True:
     tick += 1
 
     enemy_racket.play(ball)
+    if not tick % 300:
+        enemy_racket.change_mode()
 

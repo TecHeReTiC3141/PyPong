@@ -13,7 +13,7 @@ score = [0, 0]
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
-BACKGROUND = '#190781'
+BACKGROUND = pygame.transform.scale(pygame.image.load('./pypong_images/tennisnogo_korta1.jpg'), (display_width, display_height))
 
 #fonts
 title_font = pygame.font.SysFont('Cambria', 85, italic=True)
