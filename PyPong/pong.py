@@ -22,19 +22,22 @@ while True:
     if not setting.paused:
         player_racket.move()
         ball.move()
+        enemy_racket.play(ball)
+
 
     # Отрисовка обхектов
     display.blit(BACKGROUND, (17, 28))
 
     for obstacle in obstacles:
         obstacle.draw(display)
+
     player_score.draw_object(display)
     enemy_score.draw_object(display)
 
     player_racket.draw(display)
     enemy_racket.draw(display)
 
-    display.blit(title_font.render('PyPong', True, "#28cdcc"), (450, 20))
+    # display.blit(title_font.render('PyPong', True, "#28cdcc"), (450, 20))
     ball.draw(display)
 
     if setting.paused:
@@ -52,7 +55,7 @@ while True:
 
     tick += 1
 
-    enemy_racket.play(ball)
+
     if not tick % 300:
         enemy_racket.change_mode()
 

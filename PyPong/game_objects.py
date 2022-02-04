@@ -6,7 +6,7 @@ from decorations import *
 
 class Racket:
 
-    def __init__(self, x: int, y: int, width: int, height: int, cool_down=0, speed: int=4):
+    def __init__(self, x: int, y: int, width: int, height: int, direction: str, cool_down=0, speed: int=4, ):
         self.width = width
         self.height = height
         self.x = x
@@ -16,6 +16,8 @@ class Racket:
         self.surf.set_colorkey(WHITE)
         self.rect = self.surf.get_rect(topleft=(self.x, self.y))
         self.cool_down = cool_down
+        self.direction = direction
+
 
 
     def draw(self, sc: pg.Surface):
@@ -100,13 +102,13 @@ class TennisBall:
     def collide_with_rackets(self, racket: Racket):
         if self.rect.colliderect(racket.rect) and self.cool_down <= 0:
             self.cool_down = 45
-            if self.rect.x >= racket.rect.x + racket.rect.width - 10:
+            if self.rect.x >= racket.rect.x + racket.rect.width - 10 and racket.direction != 'left':
                 if self.angle < 180:
                     self.angle -= 2 * (self.angle - 90)
                 else:
                     self.angle += 2 * (270 - self.angle)
 
-            elif self.rect.x + self.rect.width <= racket.rect.x + 10:
+            elif self.rect.x + self.rect.width <= racket.rect.x + 10 and racket.direction != 'right':
                 if self.angle < 90:
                     self.angle += 2 * (90 - self.angle)
                 else:
@@ -124,8 +126,8 @@ class TennisBall:
 
 class EnemyRacket(Racket):
 
-    def __init__(self, x: int, y: int, width: int, height: int, cool_down=0, speed: int=4):
-        super().__init__(x, y, width, height, cool_down, speed)
+    def __init__(self, x: int, y: int, width: int, height: int, direction: str, cool_down=0, speed: int=4):
+        super().__init__(x, y, width, height, cool_down,  direction, speed)
         self.search_rect = pg.Rect(x - width, y - height // 2, width * 3, height * 2)
         self.reverse = 1
 
@@ -175,10 +177,10 @@ mid_border = Border(display_width // 2,
 obstacles = [upper_border, lower_border, mid_border, left_border, right_border]
 
 player_racket = Racket(x=display_width // 4, y=display_height // 2,
-                       width=display_width // 30, height=display_height // 8)  # Ракетка игрока
+                       width=display_width // 30, height=display_height // 8, direction='right')  # Ракетка игрока
 
 enemy_racket = EnemyRacket(x=display_width * 3 // 4, y=display_height // 2,
-                       width=display_width // 30, height=display_height // 8)
+                       width=display_width // 30, height=display_height // 8, direction='left')
 
 ball = TennisBall(mid_border.x + mid_border.width // 2,
                   randint(mid_border.y, mid_border.y + mid_border.height), display_width // 36, 6)
@@ -189,7 +191,7 @@ pause_button = Button(display_width // 5 * 4, display_height // 60, display_widt
 
 
 # surfaces and decorations
-menu_title = decor_label(display_width // 4, -display_height // 5, display_width // 4, display_height // 5, 3, 'PyPong', "#28cdcc", title_font, background=None)
+menu_title = decor_label(display_width // 4, -display_height // 5, display_width // 4, display_height // 5, 3, 'PyPong', "#19763D", title_font, background=None)
 
 player_score = decor_label(display_width // 36, display_height // 24, display_width // 36, display_height // 24,
                            0, '0', '#282828', background=WHITE, border=(5, BLACK))
