@@ -1,4 +1,7 @@
 from random import *
+
+import pygame.sprite
+
 from buttons import *
 from obstacles import *
 from decorations import *
@@ -85,7 +88,7 @@ class TennisBall:
 
         elif self.rect.colliderect(left_border.rect):
             score[1] += 1
-            enemy_score.label = f'{score[1]}'
+            enemy_score.update_label(f'{score[1]}')
             if self.angle < 180:
                 self.angle -= 2 * (self.angle - 90)
             else:
@@ -93,7 +96,7 @@ class TennisBall:
 
         elif self.rect.colliderect(right_border.rect):
             score[0] += 1
-            player_score.label = f'{score[0]}'
+            player_score.update_label(f'{score[0]}')
             if self.angle < 90:
                 self.angle += 2 * (90 - self.angle)
             else:
@@ -102,7 +105,7 @@ class TennisBall:
     def collide_with_rackets(self, racket: Racket):
         if self.rect.colliderect(racket.rect) and self.cool_down <= 0:
             self.cool_down = 45
-            if self.rect.x >= racket.rect.x + racket.rect.width - 10 and racket.direction != 'left':
+            if self.rect.x >= racket.rect.x + racket.rect.width - 10 and not isinstance(racket, EnemyRacket):
                 if self.angle < 180:
                     self.angle -= 2 * (self.angle - 90)
                 else:
@@ -191,11 +194,16 @@ pause_button = Button(display_width // 5 * 4, display_height // 60, display_widt
 
 
 # surfaces and decorations
-menu_title = decor_label(display_width // 4, -display_height // 5, display_width // 4, display_height // 5, 3, 'PyPong', "#19763D", title_font, background=None)
+menu_group = pygame.sprite.Group()
 
-player_score = decor_label(display_width // 36, display_height // 24, display_width // 36, display_height // 24,
-                           0, '0', '#282828', background=WHITE, border=(5, BLACK))
+menu_title = decor_label(display_width // 4, -display_height // 5, display_width // 4, display_height // 5, 3,
+                         font=title_font, text='PyPong', color="#19763D", group=menu_group, background=None)
 
-enemy_score = decor_label(display_width // 18 * 17, display_height // 24, display_width // 36, display_height // 24,
-                           0, '0', '#282828', background=WHITE, border=(5, BLACK))
+pause_menu = menu(display_width // 3, -display_height // 3, display_width // 3, display_height // 3, 3, [], menu_group)
+
+player_score = decor_label(display_width // 36, display_height // 24, display_width // 36, display_height // 24, 0,
+                           font=normal_font, text='0', color='#282828', group=[], background=WHITE, border=(5, BLACK))
+
+enemy_score = decor_label(display_width // 18 * 17, display_height // 24, display_width // 36, display_height // 24, 0,
+                           font=normal_font, text='0', color='#282828', group=[], background=WHITE, border=(5, BLACK))
 
