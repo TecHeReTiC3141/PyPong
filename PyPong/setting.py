@@ -17,6 +17,7 @@ BACKGROUND = pygame.transform.scale(pygame.image.load('./pypong_images/tennisnog
 
 #fonts
 title_font = pygame.font.SysFont('Cambria', 85, italic=True)
+normal_font = pygame.font.Font(None, 50)
 
 
 images_dict = {}
@@ -28,7 +29,6 @@ for path, dir, file in os.walk(r'./pypong_images'):
 blur_surf = pygame.Surface((display_width, display_height))
 blur_surf.set_alpha(255)
 
-menu_surf = pygame.Surface((display_width // 3, display_height // 3))
 
 
 def get_surf_center(surf: pygame.Surface) -> tuple:

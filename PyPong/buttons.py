@@ -1,4 +1,5 @@
 import pygame as pg
+import pygame.sprite
 
 import setting
 from decorations import *
@@ -43,7 +44,7 @@ class Button:
             pygame.draw.rect(sc, self.border[0], (self.x, self.y,
                                   self.width, self.height),
                              width=self.border[1])
-        self.surf.fill(WHITE)
+        self.surf.fill(setting.WHITE)
         if self.icon:
             self.surf.blit(self.icon, (0, 0))
         sc.blit(self.surf, (self.x, self.y))
@@ -57,21 +58,24 @@ class Button:
                 self.unpause(*args)
 
 
-    def pause(self, blur_surf: pg.Surface, pause_surf: pg.Surface, menu_label: decor_label):
-        self.icon = pg.transform.scale(images_dict['play_icon.jpg'],
+    def pause(self, blur_surf: pg.Surface, group: pygame.sprite.Group):
+        self.icon = pg.transform.scale(setting.images_dict['play_icon.jpg'],
                                                  (self.width, self.height))
         self.action = 'unpause'
         blur_surf.set_alpha(100)
-
-        menu_label.move_to(display_width // 3, display_height // 3)
+        for sp in group:
+            sp.move_to(setting.display_width // 3, setting.display_height // 3)
+        group.update()
         setting.paused = True
 
-    def unpause(self, blur_surf: pg.Surface, pause_surf: pg.Surface, menu_label: decor_label):
-        self.icon = pg.transform.scale(images_dict['pause_icon.png'],
+    def unpause(self, blur_surf: pg.Surface, group: pygame.sprite.Group):
+        self.icon = pg.transform.scale(setting.images_dict['pause_icon.png'],
                                                  (self.width, self.height))
         self.action = 'pause'
         blur_surf.set_alpha(0)
-        blur_surf.fill(BLACK)
+        blur_surf.fill(setting.BLACK)
+        for sp in group:
+            sp.move_to(setting.display_width // 4, -300)
 
-        menu_label.move_to(display_width // 4, -menu_label.surf.get_height())
+        group.update()
         setting.paused = False
