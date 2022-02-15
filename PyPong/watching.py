@@ -8,10 +8,15 @@ pg.init()
 
 display_width, display_height = 1024, 768
 visual = False
+start = True
 display = pg.display.set_mode((display_width, display_height))
 
 points_coords = pygame.USEREVENT + 2
 pygame.time.set_timer(points_coords, 2000)
+
+tutor_font = pygame.font.SysFont('Cambria', 40)
+tutor_text = ['Hello there', 'WASD - to move the point', 'V - toggle visualisation',
+              'M - toggle mouse mode', 'RightEnter to start']
 
 
 class Math:
@@ -92,6 +97,37 @@ class Point:
                 self.clockwise = True
 
 
+class MousePoint(Point):
+
+    def move(self, center: tuple):
+        self.x, self.y = pygame.mouse.get_pos()
+
+        self.rad = Math.dec_dist(self.x, self.y, *center)
+        self.speed = max(self.rad // 250, 1)
+        if self.clockwise:
+            if self.x >= center[0] and self.y >= center[1]:
+                self.quarter = 4
+                self.clockwise = True
+            if self.x <= center[0] and self.y >= center[1]:
+                self.quarter = 3
+            if self.x <= center[0] and self.y <= center[1]:
+                self.quarter = 2
+            if self.x >= center[0] and self.y <= center[1]:
+                self.quarter = 1
+                self.clockwise = False
+        else:
+            if self.x >= center[0] and self.y <= center[1]:
+                self.quarter = 1
+                self.clockwise = False
+            if self.x <= center[0] and self.y <= center[1]:
+                self.quarter = 2
+            if self.x <= center[0] and self.y >= center[1]:
+                self.quarter = 3
+            if self.x >= center[0] and self.y >= center[1]:
+                self.quarter = 4
+                self.clockwise = True
+
+
 class image:
 
     def __init__(self, width, height, x, y, image: pg.Surface):
@@ -130,6 +166,8 @@ class image:
         return self.x + self.image.get_width() // 2, self.y + self.image.get_height() // 2
 
 
+tutorial = pygame.Surface((display_width // 3 * 2, display_height // 3))
+
 hank = pg.transform.flip(pg.transform.scale(pg.image.load('./pypong_images/shank.png'),
                                             (225, 235)), True, False)
 hank_image = image(hank.get_width() * 2, hank.get_height() * 2, display_width // 3, display_height // 4, hank)
@@ -138,6 +176,9 @@ img_center = hank_image.get_surf_center()
 
 point = Point(x := random.randint(0, display_width), y := random.randint(0, display_height),
               8, Math.dec_dist(x, y, *hank_image.get_surf_center()), '#c2200c', speed=1)
+
+mouse_point = Point(*pygame.mouse.get_pos(),
+                    8, Math.dec_dist(x, y, *hank_image.get_surf_center()), '#c2200c', speed=1)
 
 clock = pg.time.Clock()
 
@@ -154,21 +195,28 @@ while True:
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_v:
                 visual = ~visual
-
-
+            elif event.key == pygame.K_KP_ENTER:
+                start = False
 
     display.fill((240, 240, 240))
 
     ordin, abc, meas, angle = Math.calc_angle(*hank_image.draw(display, (point.x, point.y)),
                                               point.rad, point.quarter)
     point.draw(display)
-    if visual:
+    if visual and not start:
         pg.draw.circle(display, "#BB0000", hank_image.get_surf_center(), 3)
 
         pygame.draw.circle(display, '#000000', hank_image.get_surf_center(),
                            point.rad, width=2)
+    if not start:
+        point.move(img_center)
 
-    point.move(img_center)
+    if start:
+        tutorial.fill('#BBBBBB')
+        for i in range(len(tutor_text)):
+            tutorial.blit(tutor_font.render(tutor_text[i], True, (0, 0, 0)),
+                          (tutorial.get_width() // 2 - len(tutor_text[i]) * 8, 20 + i * 40))
+            pygame.draw.rect(display, '#000000', display.blit(tutorial, (0, display_height // 3 * 2)), width=5)
 
     pg.display.update()
 
