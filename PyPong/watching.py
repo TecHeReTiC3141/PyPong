@@ -1,12 +1,13 @@
 import random
+from math import asin, acos, pi, sqrt
 
 import pygame
 import pygame as pg
-from math import asin, acos, sin, pi, sqrt
 
 pg.init()
 
-display_width, display_height = 800, 600
+display_width, display_height = 1024, 768
+visual = False
 display = pg.display.set_mode((display_width, display_height))
 
 points_coords = pygame.USEREVENT + 2
@@ -58,14 +59,15 @@ class Point:
         keys = pg.key.get_pressed()
         if keys[pg.K_DOWN]:
             self.y = min(self.y + self.speed, display_height)
-        elif keys[pg.K_UP]:
+        if keys[pg.K_UP]:
             self.y = max(self.y - self.speed, 0)
         if keys[pg.K_LEFT]:
             self.x = max(self.x - self.speed, 0)
-        elif keys[pg.K_RIGHT]:
+        if keys[pg.K_RIGHT]:
             self.x = min(self.x + self.speed, display_width)
 
         self.rad = Math.dec_dist(self.x, self.y, *center)
+        self.speed = max(self.rad // 250, 1)
         if self.clockwise:
             if self.x >= center[0] and self.y >= center[1]:
                 self.quarter = 4
@@ -88,26 +90,6 @@ class Point:
             if self.x >= center[0] and self.y >= center[1]:
                 self.quarter = 4
                 self.clockwise = True
-        # if keys[pg.K_DOWN]:
-        #
-        #     if self.quarter in [1, 4]:
-        #         self.y += self.speed
-        #         self.x = round(center[0] + sqrt(abs(sec_cat)))
-        #     else:
-        #         self.y -= self.speed
-        #         self.x = round(center[0] - sqrt(abs(sec_cat)))
-        #
-        # elif keys[pg.K_UP]:
-        #
-        #
-        # sec_cat = rads ** 2 - (self.y - center[1]) ** 2
-        # if self.quarter in [1, 4]:
-        #     self.y -= self.speed
-        #     self.x = round(center[0] + sqrt(abs(sec_cat)))
-        # else:
-        #     self.y += self.speed
-        #     self.x = round(center[0] - sqrt(abs(sec_cat)))
-        return  # add return
 
 
 class image:
@@ -130,15 +112,17 @@ class image:
         self.surf.blit(self.rotated_image, (0, 0))
         pg.draw.rect(self.surf, '#000000', self.rotated_image.get_rect(), width=3)
         sc.blit(self.surf, (self.x, self.y))
-        self.os.draw(sc)
+
         p_x, p_y = coords
         c_x, c_y = self.get_surf_center()
         os_x, os_y = self.os.x, self.os.y
-        pg.draw.line(sc, '#FF0000', (p_x, p_y), (os_x, os_y), 3)
-        pg.draw.line(sc, '#00FF00', (c_x, c_y), (os_x, os_y), 3)
-        pg.draw.line(sc, '#0000FF', (c_x, c_y), (p_x, p_y), 3)
-        pg.draw.line(sc, '#00FFFF', (p_x, c_y), (p_x, p_y), 3)
-        pg.draw.line(sc, '#FFFF00', (p_x, os_y), (os_x, os_y), 3)
+        if visual:
+            self.os.draw(sc)
+            pg.draw.aaline(sc, '#FF0000', (p_x, p_y), (os_x, os_y), 3)
+            pg.draw.aaline(sc, '#00FF00', (c_x, c_y), (os_x, os_y), 3)
+            pg.draw.aaline(sc, '#0000FF', (c_x, c_y), (p_x, p_y), 3)
+            pg.draw.aaline(sc, '#00FFFF', (p_x, c_y), (p_x, p_y), 3)
+            pg.draw.aaline(sc, '#FFFF00', (p_x, os_y), (os_x, os_y), 3)
 
         return abs(p_x - c_x), abs(p_y - c_y)
 
@@ -152,7 +136,7 @@ hank_image = image(hank.get_width() * 2, hank.get_height() * 2, display_width //
 
 img_center = hank_image.get_surf_center()
 
-point = Point(x:=random.randint(0, display_width), y:=random.randint(0, display_height),
+point = Point(x := random.randint(0, display_width), y := random.randint(0, display_height),
               8, Math.dec_dist(x, y, *hank_image.get_surf_center()), '#c2200c', speed=1)
 
 clock = pg.time.Clock()
@@ -164,19 +148,25 @@ while True:
         if event.type == pg.QUIT:
             pg.quit()
 
-        elif event.type == points_coords:
+        elif visual and event.type == points_coords:
             print(point.quarter, point.x - img_center[0], point.y - img_center[1], point.rad)
+
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_v:
+                visual = ~visual
+
+
 
     display.fill((240, 240, 240))
 
     ordin, abc, meas, angle = Math.calc_angle(*hank_image.draw(display, (point.x, point.y)),
-                                            point.rad, point.quarter)
-
+                                              point.rad, point.quarter)
     point.draw(display)
-    pg.draw.circle(display, "#BB0000", hank_image.get_surf_center(), 3)
+    if visual:
+        pg.draw.circle(display, "#BB0000", hank_image.get_surf_center(), 3)
 
-    pygame.draw.circle(display, '#000000', hank_image.get_surf_center(),
-                       point.rad, width=2)
+        pygame.draw.circle(display, '#000000', hank_image.get_surf_center(),
+                           point.rad, width=2)
 
     point.move(img_center)
 
