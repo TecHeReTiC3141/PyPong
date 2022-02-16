@@ -8,6 +8,7 @@ pg.init()
 
 display_width, display_height = 1024, 768
 visual = False
+mouse_mode = False
 start = True
 display = pg.display.set_mode((display_width, display_height))
 
@@ -40,7 +41,7 @@ class Math:
             abc /= rad
             meas = 90 - Math.from_rads_to_deg(acos(min(1., abc)))
 
-        angle = meas + (point.quarter - 1) * 90
+        angle = meas + (quarter - 1) * 90
 
         return abc, ord, meas, angle
 
@@ -138,6 +139,7 @@ class image:
 
         self.image = image.convert_alpha()
         self.surf = pg.Surface((width, height))
+        self.surf.set_colorkey('#FFFFFF')
         self.angle = 0
         self.rotated_image = image.copy()
         self.os = Point(self.get_surf_center()[0] + width // 2, self.get_surf_center()[1], 10, '#101010', 0)
@@ -146,7 +148,8 @@ class image:
         # self.image = pg.transform.rotate(self.image, self.angle)
         self.surf.fill((240, 240, 240))
         self.surf.blit(self.rotated_image, (0, 0))
-        pg.draw.rect(self.surf, '#000000', self.rotated_image.get_rect(), width=3)
+        if visual:
+            pg.draw.rect(self.surf, '#000000', self.rotated_image.get_rect(), width=3)
         sc.blit(self.surf, (self.x, self.y))
 
         p_x, p_y = coords
@@ -177,7 +180,7 @@ img_center = hank_image.get_surf_center()
 point = Point(x := random.randint(0, display_width), y := random.randint(0, display_height),
               8, Math.dec_dist(x, y, *hank_image.get_surf_center()), '#c2200c', speed=1)
 
-mouse_point = Point(*pygame.mouse.get_pos(),
+mouse_point = MousePoint(*pygame.mouse.get_pos(),
                     8, Math.dec_dist(x, y, *hank_image.get_surf_center()), '#c2200c', speed=1)
 
 clock = pg.time.Clock()
@@ -195,21 +198,28 @@ while True:
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_v:
                 visual = ~visual
+            elif event.key == pygame.K_m:
+
+                mouse_mode = ~mouse_mode
+                print(pygame.mouse.set_visible(~mouse_mode))
             elif event.key == pygame.K_KP_ENTER:
                 start = False
 
     display.fill((240, 240, 240))
-
-    ordin, abc, meas, angle = Math.calc_angle(*hank_image.draw(display, (point.x, point.y)),
+    if not mouse_mode:
+        ordin, abc, meas, angle = Math.calc_angle(*hank_image.draw(display, (point.x, point.y)),
                                               point.rad, point.quarter)
-    point.draw(display)
+    else:
+        ordin, abc, meas, angle = Math.calc_angle(*hank_image.draw(display, (mouse_point.x, mouse_point.y)),
+                                                  mouse_point.rad, mouse_point.quarter)
+    (point if not mouse_mode else mouse_point).draw(display)
     if visual and not start:
         pg.draw.circle(display, "#BB0000", hank_image.get_surf_center(), 3)
 
         pygame.draw.circle(display, '#000000', hank_image.get_surf_center(),
-                           point.rad, width=2)
+                           (point if not mouse_mode else mouse_point).rad, width=2)
     if not start:
-        point.move(img_center)
+        (point if not mouse_mode else mouse_point).move(img_center)
 
     if start:
         tutorial.fill('#BBBBBB')
@@ -222,7 +232,7 @@ while True:
 
     clock.tick(60)
     tick += 1
-    hank_image.rotated_image = pg.transform.rotate(hank_image.image, angle)
+    hank_image.rotated_image = pg.transform.rotate(hank_image.image, angle - 25)
 
     if not tick % 120:
         print(abc, ordin, meas, angle)
