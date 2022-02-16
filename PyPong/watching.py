@@ -1,15 +1,23 @@
+import random
+from math import asin, acos, pi, sqrt
+
 import pygame
 import pygame as pg
-from random import randint
-from math import asin, acos, sin, pi, sqrt
 
 pg.init()
 
-display_width, display_height = 800, 600
+display_width, display_height = 1024, 768
+visual = False
+mouse_mode = False
+start = True
 display = pg.display.set_mode((display_width, display_height))
 
 points_coords = pygame.USEREVENT + 2
 pygame.time.set_timer(points_coords, 2000)
+
+tutor_font = pygame.font.SysFont('Cambria', 40)
+tutor_text = ['Hello there', 'WASD - to move the point', 'V - toggle visualisation',
+              'M - toggle mouse mode', 'RightEnter to start']
 
 
 class Math:
@@ -24,7 +32,6 @@ class Math:
 
     @staticmethod
     def calc_angle(abc, ord, rad, quarter):
-
         if quarter is None:
             return 1, 0, 0, 0
         if quarter % 2:
@@ -34,72 +41,92 @@ class Math:
             abc /= rad
             meas = 90 - Math.from_rads_to_deg(acos(min(1., abc)))
 
-        angle = meas + (point.quarter - 1) * 90
+        angle = meas + (quarter - 1) * 90
 
         return abc, ord, meas, angle
 
 
 class Point:
 
-    def __init__(self, x, y, radius, color, speed=3):
+    def __init__(self, x, y, radius, rad, color, speed=3):
         self.x = x
         self.y = y
         self.radius = radius
+        self.rad = rad
         self.color = color
         self.speed = speed
         self.quarter = None
+        self.clockwise = None
 
     def draw(self, sc: pg.Surface):
         pg.draw.circle(sc, self.color, (self.x, self.y), self.radius)
 
-    def move(self, rads: int, center: tuple):
+    def move(self, center: tuple):
         keys = pg.key.get_pressed()
-        # if keys[pg.K_UP]:
-        #     self.y -= self.speed
-        # if keys[pg.K_DOWN]:
-        #     self.y += self.speed
-        # if keys[pg.K_LEFT]:
-        #     self.x -= self.speed
-        # if keys[pg.K_RIGHT]:
-        #     self.x += self.speed
         if keys[pg.K_DOWN]:
+            self.y = min(self.y + self.speed, display_height)
+        if keys[pg.K_UP]:
+            self.y = max(self.y - self.speed, 0)
+        if keys[pg.K_LEFT]:
+            self.x = max(self.x - self.speed, 0)
+        if keys[pg.K_RIGHT]:
+            self.x = min(self.x + self.speed, display_width)
+
+        self.rad = Math.dec_dist(self.x, self.y, *center)
+        self.speed = max(self.rad // 250, 1)
+        if self.clockwise:
             if self.x >= center[0] and self.y >= center[1]:
                 self.quarter = 4
+                self.clockwise = True
             if self.x <= center[0] and self.y >= center[1]:
                 self.quarter = 3
             if self.x <= center[0] and self.y <= center[1]:
                 self.quarter = 2
             if self.x >= center[0] and self.y <= center[1]:
                 self.quarter = 1
-            sec_cat = rads ** 2 - (self.y - center[1]) ** 2
-            if self.quarter in [1, 4]:
-                self.y += self.speed
-                self.x = round(center[0] + sqrt(abs(sec_cat)))
-            else:
-                self.y -= self.speed
-                self.x = round(center[0] - sqrt(abs(sec_cat)))
-
-
-
-
-        elif keys[pg.K_UP]:
+                self.clockwise = False
+        else:
             if self.x >= center[0] and self.y <= center[1]:
                 self.quarter = 1
+                self.clockwise = False
             if self.x <= center[0] and self.y <= center[1]:
                 self.quarter = 2
             if self.x <= center[0] and self.y >= center[1]:
                 self.quarter = 3
             if self.x >= center[0] and self.y >= center[1]:
                 self.quarter = 4
+                self.clockwise = True
 
-            sec_cat = rads ** 2 - (self.y - center[1]) ** 2
-            if self.quarter in [1, 4]:
-                self.y -= self.speed
-                self.x = round(center[0] + sqrt(abs(sec_cat)))
-            else:
-                self.y += self.speed
-                self.x = round(center[0] - sqrt(abs(sec_cat)))
-        return # add return
+
+class MousePoint(Point):
+
+    def move(self, center: tuple):
+        self.x, self.y = pygame.mouse.get_pos()
+
+        self.rad = Math.dec_dist(self.x, self.y, *center)
+        self.speed = max(self.rad // 250, 1)
+        if self.clockwise:
+            if self.x >= center[0] and self.y >= center[1]:
+                self.quarter = 4
+                self.clockwise = True
+            if self.x <= center[0] and self.y >= center[1]:
+                self.quarter = 3
+            if self.x <= center[0] and self.y <= center[1]:
+                self.quarter = 2
+            if self.x >= center[0] and self.y <= center[1]:
+                self.quarter = 1
+                self.clockwise = False
+        else:
+            if self.x >= center[0] and self.y <= center[1]:
+                self.quarter = 1
+                self.clockwise = False
+            if self.x <= center[0] and self.y <= center[1]:
+                self.quarter = 2
+            if self.x <= center[0] and self.y >= center[1]:
+                self.quarter = 3
+            if self.x >= center[0] and self.y >= center[1]:
+                self.quarter = 4
+                self.clockwise = True
 
 
 class image:
@@ -112,6 +139,7 @@ class image:
 
         self.image = image.convert_alpha()
         self.surf = pg.Surface((width, height))
+        self.surf.set_colorkey('#FFFFFF')
         self.angle = 0
         self.rotated_image = image.copy()
         self.os = Point(self.get_surf_center()[0] + width // 2, self.get_surf_center()[1], 10, '#101010', 0)
@@ -120,40 +148,40 @@ class image:
         # self.image = pg.transform.rotate(self.image, self.angle)
         self.surf.fill((240, 240, 240))
         self.surf.blit(self.rotated_image, (0, 0))
-        pg.draw.rect(self.surf, '#000000', self.rotated_image.get_rect(), width=3)
+        if visual:
+            pg.draw.rect(self.surf, '#000000', self.rotated_image.get_rect(), width=3)
         sc.blit(self.surf, (self.x, self.y))
-        self.os.draw(sc)
+
         p_x, p_y = coords
         c_x, c_y = self.get_surf_center()
         os_x, os_y = self.os.x, self.os.y
-        pg.draw.line(sc, '#FF0000', (p_x, p_y), (os_x, os_y), 3)
-        pg.draw.line(sc, '#00FF00', (c_x, c_y), (os_x, os_y), 3)
-        pg.draw.line(sc, '#0000FF', (c_x, c_y), (p_x, p_y), 3)
-        pg.draw.line(sc, '#00FFFF', (p_x, c_y), (p_x, p_y), 3)
-        pg.draw.line(sc, '#FFFF00', (p_x, os_y), (os_x, os_y), 3)
+        if visual:
+            self.os.draw(sc)
+            pg.draw.aaline(sc, '#FF0000', (p_x, p_y), (os_x, os_y), 3)
+            pg.draw.aaline(sc, '#00FF00', (c_x, c_y), (os_x, os_y), 3)
+            pg.draw.aaline(sc, '#0000FF', (c_x, c_y), (p_x, p_y), 3)
+            pg.draw.aaline(sc, '#00FFFF', (p_x, c_y), (p_x, p_y), 3)
+            pg.draw.aaline(sc, '#FFFF00', (p_x, os_y), (os_x, os_y), 3)
 
-        return (abs(p_x - c_x), abs(p_y - c_y))
+        return abs(p_x - c_x), abs(p_y - c_y)
 
     def get_surf_center(self) -> tuple[int, int]:
         return self.x + self.image.get_width() // 2, self.y + self.image.get_height() // 2
 
-    # def tg(self, point_coords: tuple):
-    #     p_x, p_y = point_coords
-    #     c_x, c_y = self.get_surf_center()
-    #     prot = p_y - c_y
-    #     pril = p_x - c_x
-    #     self.angle = atan(prot / pril) * 180 / pi
-    #     return prot / pril, self.angle
 
+tutorial = pygame.Surface((display_width // 3 * 2, display_height // 3))
 
-hank = pg.transform.flip(pg.transform.scale(pg.image.load('./pypong_images/shank.jpg'),
+hank = pg.transform.flip(pg.transform.scale(pg.image.load('./pypong_images/shank.png'),
                                             (225, 235)), True, False)
 hank_image = image(hank.get_width() * 2, hank.get_height() * 2, display_width // 3, display_height // 4, hank)
-rad = hank_image.width // 2
+
 img_center = hank_image.get_surf_center()
 
-point = Point(hank_image.get_surf_center()[0] + hank_image.width // 2,
-              hank_image.get_surf_center()[1], 8, '#c2200c', speed=1)
+point = Point(x := random.randint(0, display_width), y := random.randint(0, display_height),
+              8, Math.dec_dist(x, y, *hank_image.get_surf_center()), '#c2200c', speed=1)
+
+mouse_point = MousePoint(*pygame.mouse.get_pos(),
+                    8, Math.dec_dist(x, y, *hank_image.get_surf_center()), '#c2200c', speed=1)
 
 clock = pg.time.Clock()
 
@@ -164,29 +192,47 @@ while True:
         if event.type == pg.QUIT:
             pg.quit()
 
-        elif event.type == points_coords:
-            print(point.quarter, point.x - img_center[0], point.y - img_center[1], rad, rad ** 2 - (point.y - img_center[1]) ** 2)
+        elif visual and event.type == points_coords:
+            print(point.quarter, point.x - img_center[0], point.y - img_center[1], point.rad)
+
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_v:
+                visual = ~visual
+            elif event.key == pygame.K_m:
+
+                mouse_mode = ~mouse_mode
+                print(pygame.mouse.set_visible(~mouse_mode))
+            elif event.key == pygame.K_KP_ENTER:
+                start = False
 
     display.fill((240, 240, 240))
+    if not mouse_mode:
+        ordin, abc, meas, angle = Math.calc_angle(*hank_image.draw(display, (point.x, point.y)),
+                                              point.rad, point.quarter)
+    else:
+        ordin, abc, meas, angle = Math.calc_angle(*hank_image.draw(display, (mouse_point.x, mouse_point.y)),
+                                                  mouse_point.rad, mouse_point.quarter)
+    (point if not mouse_mode else mouse_point).draw(display)
+    if visual and not start:
+        pg.draw.circle(display, "#BB0000", hank_image.get_surf_center(), 3)
 
+        pygame.draw.circle(display, '#000000', hank_image.get_surf_center(),
+                           (point if not mouse_mode else mouse_point).rad, width=2)
+    if not start:
+        (point if not mouse_mode else mouse_point).move(img_center)
 
-    ord, abc, meas, angle = Math.calc_angle(*hank_image.draw(display, (point.x, point.y)),
-                                  rad, point.quarter)
-
-    point.draw(display)
-    pg.draw.circle(display, "#BB0000", hank_image.get_surf_center(), 3)
-
-    pygame.draw.circle(display, '#000000', hank_image.get_surf_center(),
-                       hank_image.width // 2, width=2)
-
-    point.move(rad, img_center)
+    if start:
+        tutorial.fill('#BBBBBB')
+        for i in range(len(tutor_text)):
+            tutorial.blit(tutor_font.render(tutor_text[i], True, (0, 0, 0)),
+                          (tutorial.get_width() // 2 - len(tutor_text[i]) * 8, 20 + i * 40))
+            pygame.draw.rect(display, '#000000', display.blit(tutorial, (0, display_height // 3 * 2)), width=5)
 
     pg.display.update()
 
     clock.tick(60)
     tick += 1
-    hank_image.rotated_image = pg.transform.rotate(hank_image.image, angle)
+    hank_image.rotated_image = pg.transform.rotate(hank_image.image, angle - 25)
 
     if not tick % 120:
-        print(abc, ord, meas, angle)
-
+        print(abc, ordin, meas, angle)
